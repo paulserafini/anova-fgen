@@ -1,11 +1,7 @@
 function (table, length) {
   cat('<table border="1" bordercolor="808080"')
+  cat('<tr><td align="center"><font color=white>E(MSA)</font></td><td align="center" colspan="2"><b>Constant</b></td><td align="center" colspan="',length-3,'"><b>Provisional</b></td></tr>')
     for (i in 1:nrow(table)) {
-      if (i == 1) {
-  			cat('<tr><td align="center"><font color=white>E(MSA)</font></td><td align="center" colspan="2"><b>Constant</b></td><td align="center" colspan="',length-3,'"><b>Provisional</b></td>')
-			cat('</tr>')
-
-		} else {
 			cat('<tr>')
 			for (j in 1:length(table[i,])) {
                             if (j == 1) {
@@ -16,6 +12,5 @@ function (table, length) {
 			}
 			cat('</tr>')
 		}
-	}
 	cat('</table>')
 }
