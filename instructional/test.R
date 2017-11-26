@@ -95,7 +95,7 @@ function (factors, factor_type, step) {
   			effect <- effect_type[[num]]
   			matrix[,2] <- gsub(char, effect, as.character(matrix[,2]))
   		}
-  		matrix[ grepl(1, matrix[,2]), ] <- paste('<font color=white>', matrix[ grepl(1, matrix[,2]), ], '</font>')
+  		matrix[ grepl(1, matrix[,2]), ] <- paste('<font color=white>', matrix[ grepl(1, matrix[,2]), ], sep = '')
 		}
 		matrix <- matrix[ matrix[,2] != "",, drop=FALSE ]
 
@@ -107,7 +107,7 @@ function (factors, factor_type, step) {
 		  matrix <- matrix[,-2, drop=FALSE]
 		  matrix[,1] <- lapply(matrix[,1], function(x) ({
 		    if (grepl('white', x)) {
-		      x <- paste(x, '<sub>', sep="")
+		      x <- paste(x, '&sigma;</font><sub>', sep="")
 		    } else {
 		      x <- paste(x,'&sigma;<sub>', sep="")
 		    }
