@@ -64,20 +64,20 @@ function (factors, factor_type) {
 	}
 	
 	# Create provisionals
-	provisional <- matrix(NA, nrow=1, ncol=num_effects)
+	provisional <- matrix("", nrow=1, ncol=num_effects)
 	for (a in 1:num_effects) {
 
 		effect_strings <- lapply(effects, function(x) paste(x, collapse=""))
 		matrix <- cbind(weights,tolower(effect_strings),effect_strings)
 
-		# Remove focal factors
+		# Remove focal effect
 		for (e in effects[[a]]) {
 			char <- tolower(e)
 			matrix <- matrix[ grepl(char, matrix[,2]),, drop=FALSE ]
 			matrix[,2] <- gsub(char, "", as.character(matrix[,2]))
 		}
 
-		# Remove rows containing fixed factors
+		# Remove fixed effects
 		alphabet <- c('a','b','c','d')
 		for (f in factors) {
 			char <- tolower(f)
@@ -98,10 +98,10 @@ function (factors, factor_type) {
 		  matrix[,1] <- paste(matrix[,1], '</sub>')
 		  matrix <- matrix[,-2, drop=FALSE]
 
-			padding <- matrix(NA, nrow=diff, ncol=1)
+			padding <- matrix("", nrow=diff, ncol=1)
 			matrix <- rbind(matrix, padding)
 		} else {
-		  matrix <- matrix(NA, nrow=diff, ncol=1)
+		  matrix <- matrix("", nrow=diff, ncol=1)
 		}
 		matrix <- t(matrix)
 		provisional <- rbind(provisional, matrix)
@@ -111,18 +111,10 @@ function (factors, factor_type) {
 	# Format output
 	effects <- lapply(effects, function(effect) paste(effect, collapse=""))
 	output <- cbind(c("",effects), c("",weights), provisional)
+	output[,2] <- paste(output[,2], '&sigma;<sub>', output[,1], '</sub>', sep='')
+	output[1,1] <- paste('U/', paste(factors, collapse=""), sep="")
+	output[,1] <- paste('E(MS<sub>', output[,1], '</sub>)', sep='')
+	output <- output[, colSums(output == "") != nrow(output)]
 
-	output[,2] <- paste(output[,2], output[,1], sep="&sigma;<sub>")
-	output[,2] <- paste(output[,2], '</sub>')
-	z <- paste(factors, collapse="")
-	output[1,1] <- paste('U/', z, sep="")
-	output[,1] <- paste('E(MS<sub>', output[,1], '</sub>)', sep="")
-	output[1,2] <- "&sigma;"
-	dimnames(output) <- NULL
-
-	output <- output[, colSums(is.na(output)) != nrow(output)]
-	
-	output[is.na(output)] <- ""
-	
 	tablegen(output,FALSE)
 }
