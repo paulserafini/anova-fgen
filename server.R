@@ -13,8 +13,7 @@ shinyServer(function(input, output, session) {
   
   output$foutput <- eventReactive(input$runButton, {
     calc <- dget("test.R")
-    tablegen <- dget("tablegen.r")
-    
+
     alphabet <- c('A','B','C','D')
 
     factor_type <- c()

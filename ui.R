@@ -13,7 +13,7 @@ shinyUI(fluidPage(theme = "simplex.css",
                       color: #333;
                     }
                     sup {
-                      top: 1px;
+                      top: -3px;
                     }
                     td {
                     white-space: nowrap;

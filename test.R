@@ -1,40 +1,28 @@
-# sample input
-#factors <- c('A', 'B')
-#factor_type <- c(1, 0)
-# 1 = fixed, 0 = random
-
-tablegen <- dget("tablegen.r")
-
+tablegen <- dget("tablegen.R")
 function (factors, factor_type) {
 
-	# Create a list of the effects from the factors
-	num_factors <- length(factors)
-	effects <- c()
-	for (i in 1:num_factors) {
-		iway_factorcombos <- combn(factors, i)
-		iway_effects <- lapply(1:ncol(iway_factorcombos), function(i) iway_factorcombos[,i])
-		effects <- c(effects, iway_effects)
+  # Generate vector of 2 way, 3 way, etc. combinations of input
+	combogen <- function (input, num_factors) {
+	  output <- c()
+    for (i in 1:num_factors) {
+      matrix <- combn(input, i)
+      vector <- lapply(1:ncol(matrix), function(i) matrix[,i])
+      output <- c(output, vector)
+    }
+	  return(output)
 	}
-	num_effects <- length(effects)
 
-	# Create a list with the type for each effect
-	effect_type <- c()
-	for (i in 1:num_factors) {
-		iway_typecombos <- combn(factor_type, i)
-		iway_types <- lapply(1:ncol(iway_typecombos), function(c) iway_typecombos[,c])
-		effect_type <- c(effect_type, iway_types)
-	}
+	num_factors <- length(factors)
+	factor_df <- unlist(lapply(factors, function(v) paste0('(',tolower(v), '-1)')))
+
+	effects <- combogen(factors, num_factors)
+	effect_type <- combogen(factor_type, num_factors)
+	effect_df <- combogen(factor_df, num_factors)
+	effect_df <- lapply(effect_df, function(i) paste(i, collapse=""))
+
+	num_effects <- length(effects)
 	effect_type <- lapply(effect_type, function(effect) prod(effect))
 
-	# Create denominators for fixed effects
-	lowercase <- unlist(lapply(factors, function(v) paste0('(',tolower(v), '-1)')))
-	df <- c()
-	for (i in 1:num_factors) {
-		iway_dfcombos <- combn(lowercase, i)
-		iway_df <- lapply(1:ncol(iway_dfcombos), function(i) paste(iway_dfcombos[,i], collapse=""))
-		df <- c(df, iway_df)
-	}
-	
 	# Create denominator for random effects
 	levels <- lapply(1:num_effects, function(i) paste(effects[[i]], collapse=""))
 	levels <- unlist(lapply(levels, function(v) tolower(v)))
@@ -43,7 +31,7 @@ function (factors, factor_type) {
 	denominators <- c()
 	for (i in 1:num_effects) {
 		if (effect_type[[i]] == 1) {
-			denominators[[i]] <- df[[i]]
+			denominators[[i]] <- effect_df[[i]]
 		} else {
 			denominators[[i]] <- levels[[i]]
 		}
@@ -90,10 +78,10 @@ function (factors, factor_type) {
 		}
 
 		# Remove rows containing fixed factors
-		myLetters <- letters[1:26]
+		alphabet <- c('a','b','c','d')
 		for (f in factors) {
 			char <- tolower(f)
-			num <- match(char, myLetters)
+			num <- match(char, alphabet)
 			effect <- effect_type[[num]]
 			matrix[,2] <- gsub(char, effect, as.character(matrix[,2]))
 		}
