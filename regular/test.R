@@ -102,12 +102,10 @@ function (factors, factor_type) {
 
 
 	# Format output
-	effects <- lapply(effects, function(effect) paste(effect, collapse=""))
-	output <- cbind(c("",effects), c("&nbsp;&nbsp;&sigma;&nbsp;&nbsp;"), c("",weights), provisional)
-	output[,3] <- paste(output[,3], '&sigma;<sub>', output[,1], '</sub>', sep='')
-	output[1,1] <- paste('U/', paste(factors, collapse=""), sep="")
-	output[1,3] <- ""
-	output[,1] <- paste('E(MS<sub>', output[,1], '</sub>)', sep='')
+	emsu <- paste0('E(MS<sub>U/', paste(factors, collapse=""),'</sub>)')
+	row_names <- c(emsu, lapply(effect_strings, function(x) paste0('E(MS<sub>', x, '</sub>)')))
+	weights <- c("", paste(weights, '&sigma;<sub>', effect_strings, '</sub>', sep=''))
+	output <- cbind(row_names, c('&nbsp;&nbsp;&sigma;&nbsp;&nbsp;'), weights, provisional)
 	output <- output[, colSums(output == "") != nrow(output)]
 
 	tablegen(output,nrow(output))
