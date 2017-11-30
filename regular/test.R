@@ -1,33 +1,34 @@
 tablegen <- dget("tablegen.R")
 function (factors, factor_type) {
 
-  # Generate vector of 2 way, 3 way, etc. combinations of input
+  	# Generate vector of 2 way, 3 way, etc. combinations of input
 	combogen <- function (input, num_factors) {
-	  output <- c()
-    for (i in 1:num_factors) {
-      matrix <- combn(input, i)
-      vector <- lapply(1:ncol(matrix), function(i) matrix[,i])
-      output <- c(output, vector)
-    }
-	  return(output)
+	  	output <- c()
+		for (i in 1:num_factors) {
+		  matrix <- combn(input, i)
+		  vector <- lapply(1:ncol(matrix), function(i) matrix[,i])
+		  output <- c(output, vector)
+		}
+		return(output)
 	}
 
 	num_factors <- length(factors)
 	factor_df <- unlist(lapply(factors, function(v) paste0('(',tolower(v), '-1)')))
 
+	# Make vectors of the effects, their type (0 = random, 1 = fixed), and their degrees of freedom
 	effects <- combogen(factors, num_factors)
 	effect_type <- combogen(factor_type, num_factors)
 	effect_df <- combogen(factor_df, num_factors)
-	effect_df <- lapply(effect_df, function(i) paste(i, collapse=""))
 
-	num_effects <- length(effects)
+	effect_df <- lapply(effect_df, function(i) paste(i, collapse=""))
 	effect_type <- lapply(effect_type, function(effect) prod(effect))
 
 	# Create denominator for random effects
+	num_effects <- length(effects)
 	levels <- lapply(1:num_effects, function(i) paste(effects[[i]], collapse=""))
 	levels <- unlist(lapply(levels, function(v) tolower(v)))
 
-	# Assign appropriate denominator to list
+	# Create vector of denominators
 	denominators <- c()
 	for (i in 1:num_effects) {
 		if (effect_type[[i]] == 1) {
@@ -45,7 +46,7 @@ function (factors, factor_type) {
 	# Create weights
 	weights <- c()
 	for (i in 1:num_effects) {
-		if (effect_type[[i]] == 0) {
+		if (effect_type[[i]] == 0) { # remove common characters from numerator and denominator; if denominator is empty then weight = numerator
 			num_pretrim <- unlist(strsplit(numerators[[i]], ""))
 			den_pretrim <- unlist(strsplit(denominators[[i]], ""))
 			num_trim <- paste(num_pretrim[!(num_pretrim %in% den_pretrim)], collapse="")
@@ -62,19 +63,25 @@ function (factors, factor_type) {
 		}
 		weights[[i]] <- weight
 	}
+
+	effect_strings <- lapply(effects, function(x) paste(x, collapse=""))
+
+	# Assemble weights and variances
+	weightplusvariance <- lapply(1:num_effects, function(x) {
+		paste0(weights[[x]],'&sigma;<sub>',effect_strings[[x]],'</sub>')
+	})
 	
-	# Create provisionals
+	# Create provisionals for each effect
 	provisional <- matrix("", nrow=1, ncol=num_effects)
 	for (a in 1:num_effects) {
 
-		effect_strings <- lapply(effects, function(x) paste(x, collapse=""))
-		matrix <- cbind(weights,tolower(effect_strings),effect_strings)
+		matt <- cbind(weightplusvariance,tolower(effect_strings))
 
-		# Remove focal effect
+		# Rule out effects w/ out the focal effects
 		for (e in effects[[a]]) {
 			char <- tolower(e)
-			matrix <- matrix[ grepl(char, matrix[,2]),, drop=FALSE ]
-			matrix[,2] <- gsub(char, "", as.character(matrix[,2]))
+			matt <- matt[ grepl(char, matt[,2]),, drop=FALSE ]
+			matt[,2] <- gsub(char, "", as.character(matt[,2]))
 		}
 
 		# Remove fixed effects
@@ -83,27 +90,14 @@ function (factors, factor_type) {
 			char <- tolower(f)
 			num <- match(char, alphabet)
 			effect <- effect_type[[num]]
-			matrix[,2] <- gsub(char, effect, as.character(matrix[,2]))
+			matt[,2] <- gsub(char, effect, as.character(matt[,2]))
 		}
-		matrix <- matrix[ !grepl(1, matrix[,2]),, drop=FALSE ]
-		matrix <- matrix[ matrix[,2] != "",, drop=FALSE ]
+		matt <- matt[ !grepl(1, matt[,2]),, drop=FALSE ]
+		matt <- matt[ matt[,2] != "",, drop=FALSE ]
 
-		# Bind the provisionals to the matrix
-		rows <- nrow(matrix)
-		diff <- num_effects - rows
-		if (rows > 0) {
-		  # Delete unnecessary column first
-		  matrix <- matrix[,-2, drop=FALSE]
-		  matrix[,1] <- paste(matrix[,1], '&sigma;<sub>', matrix[,2], '</sub>', sep="")
-		  matrix <- matrix[,-2, drop=FALSE]
-
-			padding <- matrix("", nrow=diff, ncol=1)
-			matrix <- rbind(matrix, padding)
-		} else {
-		  matrix <- matrix("", nrow=diff, ncol=1)
-		}
-		matrix <- t(matrix)
-		provisional <- rbind(provisional, matrix)
+		diff <- num_effects - nrow(matt)
+		vect <- c(matt[,1], rep("", diff))
+		provisional <- rbind(provisional, vect)
 	}
 
 
