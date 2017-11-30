@@ -80,14 +80,11 @@ function (factors, factor_type, step) {
 	weightplusvariance <- lapply(1:num_effects, function(x) {
 		paste0(weights[[x]],'&sigma;<sub>',effect_strings[[x]],'</sub>')
 	})
-	
-	# Create provisionals for each effect
+
 	provisional <- matrix("", nrow=1, ncol=num_effects)
 	for (a in 1:num_effects) {
 
 		matt <- cbind(weightplusvariance,tolower(effect_strings))
-
-		#matt[a,] <- NULL
 		matt <- matt[-a,]
 
 		# Rule out effects w/ out the focal effects
@@ -96,7 +93,7 @@ function (factors, factor_type, step) {
 			matt <- matt[ grepl(char, matt[,2]),, drop=FALSE ]
 			matt[,2] <- gsub(char, "", as.character(matt[,2]))
 		}
-		matt <- matt[ matt[,2] != "",, drop=FALSE]
+		#matt <- matt[ matt[,2] != "",, drop=FALSE ]
 
 		# Remove fixed effects
 		alphabet <- c('a','b','c','d')
@@ -107,13 +104,14 @@ function (factors, factor_type, step) {
 				effect <- effect_type[[num]]
 				matt[,2] <- gsub(char, effect, as.character(matt[,2]))
 			}
-  			matt[ grepl(1, matt[,2]), ] <- ""
+  			matt[ grepl(1, matt[,2]), ] <- paste0('<font color=white>',matt[ grepl(1, matt[,2]), ],'</font>')
 		}
 
 		diff <- num_effects - nrow(matt)
 		vect <- c(matt[,1], rep("", diff))
 		provisional <- rbind(provisional, vect)
 	}
+
 
 	# Format output
 	emsu <- paste0('E(MS<sub>U/', paste(factors, collapse=""),'</sub>)')
