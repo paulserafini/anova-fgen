@@ -1,33 +1,34 @@
 tablegen <- dget("tablegen.R")
 function (factors, factor_type, step) {
 
-  # Generate vector of 2 way, 3 way, etc. combinations of input
+  	# Generate vector of 2 way, 3 way, etc. combinations of input
 	combogen <- function (input, num_factors) {
-	  output <- c()
-    for (i in 1:num_factors) {
-      matrix <- combn(input, i)
-      vector <- lapply(1:ncol(matrix), function(i) matrix[,i])
-      output <- c(output, vector)
-    }
-	  return(output)
+	  	output <- c()
+		for (i in 1:num_factors) {
+		  matrix <- combn(input, i)
+		  vector <- lapply(1:ncol(matrix), function(i) matrix[,i])
+		  output <- c(output, vector)
+		}
+		return(output)
 	}
 
 	num_factors <- length(factors)
 	factor_df <- unlist(lapply(factors, function(v) paste0('(',tolower(v), '-1)')))
 
+	# Make vectors of the effects, their type (0 = random, 1 = fixed), and their degrees of freedom
 	effects <- combogen(factors, num_factors)
 	effect_type <- combogen(factor_type, num_factors)
 	effect_df <- combogen(factor_df, num_factors)
-	effect_df <- lapply(effect_df, function(i) paste(i, collapse=""))
 
-	num_effects <- length(effects)
+	effect_df <- lapply(effect_df, function(i) paste(i, collapse=""))
 	effect_type <- lapply(effect_type, function(effect) prod(effect))
 
 	# Create denominator for random effects
+	num_effects <- length(effects)
 	levels <- lapply(1:num_effects, function(i) paste(effects[[i]], collapse=""))
 	levels <- unlist(lapply(levels, function(v) tolower(v)))
 
-	# Assign appropriate denominator to list
+	# Create vector of denominators
 	denominators <- c()
 	for (i in 1:num_effects) {
 		if (effect_type[[i]] == 1) {
@@ -46,7 +47,7 @@ function (factors, factor_type, step) {
 	weights <- c()
 	for (i in 1:num_effects) { # step 3
 	  if (step > 2) {
-  		if (effect_type[[i]] == 0) {
+  		if (effect_type[[i]] == 0) { # remove common characters from numerator and denominator; if denominator is empty then weight = numerator
   			num_pretrim <- unlist(strsplit(numerators[[i]], ""))
   			den_pretrim <- unlist(strsplit(denominators[[i]], ""))
   			if (step > 3) { # step 4
@@ -71,71 +72,55 @@ function (factors, factor_type, step) {
 	  }
 		weights[[i]] <- weight
 	}
+
+
+	effect_strings <- lapply(effects, function(x) paste(x, collapse=""))
+
+	# Assemble weights and variances
+	weightplusvariance <- lapply(1:num_effects, function(x) {
+		paste0(weights[[x]],'&sigma;<sub>',effect_strings[[x]],'</sub>')
+	})
 	
-	# Create provisionals
+	# Create provisionals for each effect
 	provisional <- matrix("", nrow=1, ncol=num_effects)
 	for (a in 1:num_effects) {
 
-		effect_strings <- lapply(effects, function(x) paste(x, collapse=""))
-		matrix <- cbind(weights,tolower(effect_strings),effect_strings)
+		matt <- cbind(weightplusvariance,tolower(effect_strings))
 
-		# Remove focal effect
+		#matt[a,] <- NULL
+		matt <- matt[-a,]
+
+		# Rule out effects w/ out the focal effects
 		for (e in effects[[a]]) {
 			char <- tolower(e)
-			matrix <- matrix[ grepl(char, matrix[,2]),, drop=FALSE ]
-			matrix[,2] <- gsub(char, "", as.character(matrix[,2]))
+			matt <- matt[ grepl(char, matt[,2]),, drop=FALSE ]
+			matt[,2] <- gsub(char, "", as.character(matt[,2]))
 		}
+		matt <- matt[ matt[,2] != "",, drop=FALSE]
 
 		# Remove fixed effects
 		alphabet <- c('a','b','c','d')
 		if (step > 1) { # step 2
-  		for (f in factors) {
-  			char <- tolower(f)
-  			num <- match(char, alphabet)
-  			effect <- effect_type[[num]]
-  			matrix[,2] <- gsub(char, effect, as.character(matrix[,2]))
-  		}
-  		matrix[ grepl(1, matrix[,2]), ] <- paste('<font color=white>', matrix[ grepl(1, matrix[,2]), ], sep = '')
+			for (f in factors) {
+				char <- tolower(f)
+				num <- match(char, alphabet)
+				effect <- effect_type[[num]]
+				matt[,2] <- gsub(char, effect, as.character(matt[,2]))
+			}
+  			matt[ grepl(1, matt[,2]), ] <- ""
 		}
-		matrix <- matrix[ matrix[,2] != "",, drop=FALSE ]
 
-		# Bind the provisionals to the matrix
-		rows <- nrow(matrix)
-		diff <- num_effects - rows
-		if (rows > 0) {
-		  # Delete unnecessary column first
-		  matrix <- matrix[,-2, drop=FALSE]
-		  matrix[,1] <- lapply(matrix[,1], function(x) ({
-		    if (grepl('white', x)) {
-		      x <- paste(x, '&sigma;</font><sub>', sep="")
-		    } else {
-		      x <- paste(x,'&sigma;<sub>', sep="")
-		    }
-		  }))
-		  matrix[,1] <- paste(matrix[,1], matrix[,2], '</sub>', sep="")
-		  #matrix[,1] <- paste(matrix[,1], '</sub>')
-		  matrix <- matrix[,-2, drop=FALSE]
-
-			padding <- matrix("", nrow=diff, ncol=1)
-			matrix <- rbind(matrix, padding)
-		} else {
-		  matrix <- matrix("", nrow=diff, ncol=1)
-		}
-		matrix <- t(matrix)
-		provisional <- rbind(provisional, matrix)
+		diff <- num_effects - nrow(matt)
+		vect <- c(matt[,1], rep("", diff))
+		provisional <- rbind(provisional, vect)
 	}
 
-
 	# Format output
-	effects <- lapply(effects, function(effect) paste(effect, collapse=""))
-	output <- cbind(c("",effects), rep("", num_effects+1), c("",weights), provisional)
-	output[,2] <- '&nbsp;&nbsp;&sigma;&nbsp;&nbsp;'
-	output[,3] <- paste(output[,3], '&sigma;<sub>', output[,1], '</sub>', sep='')
-	output[1,3] <- ""
-	output[1,1] <- paste('U/', paste(factors, collapse=""), sep="")
-	output[,1] <- paste('E(MS<sub>', output[,1], '</sub>)', sep='')
+	emsu <- paste0('E(MS<sub>U/', paste(factors, collapse=""),'</sub>)')
+	row_names <- c(emsu, lapply(effect_strings, function(x) paste0('E(MS<sub>', x, '</sub>)')))
+	weights <- c("", paste(weights, '&sigma;<sub>', effect_strings, '</sub>', sep=''))
+	output <- cbind(row_names, c('&nbsp;&nbsp;&sigma;&nbsp;&nbsp;'), weights, provisional)
 	output <- output[, colSums(output == "") != nrow(output)]
-	#output[output == "&sigma;<sub> </sub>"] <- "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
 
 	tablegen(output,ncol(output))
 }
