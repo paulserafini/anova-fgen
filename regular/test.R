@@ -102,9 +102,10 @@ function (factors, factor_type) {
 	provisional <- provisional [-1,]
 
 	# Format output
-	emsu <- paste0('E(MS<sub>U/', paste(factors, collapse=""),'</sub>)', '&sigma;', '', rep('', num_effects))
+	top_row <- c(paste0('E(MS<sub>U/', paste(factors, collapse=""),'</sub>)'), '&sigma;', '', rep('', num_effects))
 	row_names <- lapply(effect_strings, function(x) paste0('E(MS<sub>', x, '</sub>)'))
 	output <- cbind(row_names, c('&nbsp;&nbsp;&sigma;&nbsp;&nbsp;'), weightplusvariance, provisional)
+	output <- rbind(top_row, output)
 	output <- output[, colSums(output == "") != nrow(output)]
 
 	tablegen(output,nrow(output))
