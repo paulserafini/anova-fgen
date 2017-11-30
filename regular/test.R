@@ -99,13 +99,12 @@ function (factors, factor_type) {
 		vect <- c(matt[,1], rep("", diff))
 		provisional <- rbind(provisional, vect)
 	}
-
+	provisional <- provisional [-1,]
 
 	# Format output
-	emsu <- paste0('E(MS<sub>U/', paste(factors, collapse=""),'</sub>)')
-	row_names <- c(emsu, lapply(effect_strings, function(x) paste0('E(MS<sub>', x, '</sub>)')))
-	weights <- c("", paste(weights, '&sigma;<sub>', effect_strings, '</sub>', sep=''))
-	output <- cbind(row_names, c('&nbsp;&nbsp;&sigma;&nbsp;&nbsp;'), weights, provisional)
+	emsu <- paste0('E(MS<sub>U/', paste(factors, collapse=""),'</sub>)', '&sigma;', '', rep('', num_effects))
+	row_names <- lapply(effect_strings, function(x) paste0('E(MS<sub>', x, '</sub>)'))
+	output <- cbind(row_names, c('&nbsp;&nbsp;&sigma;&nbsp;&nbsp;'), weightplusvariance, provisional)
 	output <- output[, colSums(output == "") != nrow(output)]
 
 	tablegen(output,nrow(output))
