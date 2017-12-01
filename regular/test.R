@@ -14,49 +14,44 @@ function (factors, factor_type) {
 		return(output)
 	}
 
-	# Make vectors of the effects, their type , and their degrees of freedom
+	# Make vectors of the effects and their types
 	num_factors <- length(factors)
-
 	effects <- combogen(factors, num_factors)
-
 	effect_type <- combogen(factor_type, num_factors)
 	effect_type <- lapply(effect_type, function(effect) prod(effect))
 
+	# Make denominator for fixed effects
 	factor_df <- lapply(factors, function(v) paste0('(',tolower(v), '-1)'))
 	effect_df <- combogen(factor_df, num_factors)
 	effect_df <- lapply(effect_df, function(i) paste(i, collapse=""))
 
-	# Create denominator for random effects
-	num_effects <- length(effects)
-	levels <- lapply(1:num_effects, function(i) paste(effects[[i]], collapse=""))
-	levels <- unlist(lapply(levels, function(v) tolower(v)))
-
-	# Create vector of denominators
-	combined <- list(levels, effect_df)
-	denominators <- unlist(lapply(1:num_effects, function(x) combined[[ effect_type[[x]]+1 ]] [[x]] ))
-
-	# Create numerator
-	numerator <- tolower(paste(factors, collapse=""))
-	numerator <- paste0('n',numerator)
-	numerators <- rep(numerator, num_effects)
+	# Create numerator for fixed effects
+	fixed_numerator <- paste(factors, collapse="")
+	fixed_numerator <- tolower(fixed_numerator)
+	fixed_numerator <- paste0('n',fixed_numerator)
 	
 	# Create weights
+	num_effects <- length(effects)
 	weights <- c()
 	for (i in 1:num_effects) {
 		if (effect_type[[i]] == 0) { # remove common characters from numerator and denominator; if denominator is empty then weight = numerator
-			num_pretrim <- unlist(strsplit(numerators[[i]], ""))
-			den_pretrim <- unlist(strsplit(denominators[[i]], ""))
-			num_trim <- paste(num_pretrim[!(num_pretrim %in% den_pretrim)], collapse="")
-			den_trim <- paste(den_pretrim[!(den_pretrim %in% num_pretrim)], collapse="")
-			if (den_trim == '') {
-			  weight <- num_trim
+
+			numerator <- factors[!(factors %in% effects[[i]])]
+			numerator <- paste(numerator, collapse = "")
+			numerator <- tolower(numerator)
+
+			denominator <- effects[[i]][!(effects[[i]] %in% factors)]
+			denominator <- paste(denominator, collapse = "")
+			denominator <- tolower(denominator)
+
+			if (denominator == '') {
+			  weight <- paste0('n', numerator)
 			} else {
-			  weight <- paste0('[ <sup>', num_trim, '</sup>&frasl;<sub>', den_trim, '</sub> ]')
+			  weight <- paste0('[ <sup>n', numerator, '</sup>&frasl;<sub>', denominator, '</sub> ]')
 			}
+
 		} else {
-			numerator <- numerators[[i]]
-			denominator <- denominators[[i]]
-			weight <- paste0('[ <sup>', numerator, '</sup>&frasl;<sub>', denominator, '</sub> ]')
+			weight <- paste0('[ <sup>', fixed_numerator, '</sup>&frasl;<sub>', effect_df[[i]], '</sub> ]')
 		}
 		weights[[i]] <- weight
 	}
