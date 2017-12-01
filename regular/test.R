@@ -39,15 +39,7 @@ function (factors, factor_type) {
 			numerator <- paste(numerator, collapse = "")
 			numerator <- tolower(numerator)
 
-			denominator <- effects[[i]][!(effects[[i]] %in% factors)]
-			denominator <- paste(denominator, collapse = "")
-			denominator <- tolower(denominator)
-
-			if (denominator == "") {
-			  weight <- paste0("n", numerator)
-			} else {
-			  weight <- paste0("[ <sup>n", numerator, "</sup>&frasl;<sub>", denominator, "</sub> ]")
-			}
+			weight <- paste0("n", numerator)
 
 		} else {
 			weight <- paste0("[ <sup>n", fixed_numerator, "</sup>&frasl;<sub>", fixed_denominator[[i]], "</sub> ]")

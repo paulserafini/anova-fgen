@@ -38,7 +38,7 @@ function (factors, factor_type, step) {
 
   				if (step > 3) { # step 4
 					numerator <- factors[!(factors %in% effects[[i]])]
-					denominator <- effects[[i]][!(effects[[i]] %in% factors)]
+					denominator <- ""
 				} else {
 					numerator <- factors
 					denominator <- effects[[i]]
