@@ -1,27 +1,30 @@
 tablegen <- dget("tablegen.R")
 function (factors, factor_type) {
+# factors is a vector of letters, e.g. c('A', 'B', 'C')
+# factor_type is a vector of 1s and 0s where 1 = fixed and 0 = random, e.g. c(1, 0, 1)
 
   	# Generate vector of 2 way, 3 way, etc. combinations of input
 	combogen <- function (input, num_factors) {
 	  	output <- c()
 		for (i in 1:num_factors) {
-		  matrix <- combn(input, i)
-		  vector <- lapply(1:ncol(matrix), function(i) matrix[,i])
-		  output <- c(output, vector)
+		  matt <- combn(input, i)
+		  vect <- lapply(1:ncol(matt), function(i) matt[,i])
+		  output <- c(output, vect)
 		}
 		return(output)
 	}
 
+	# Make vectors of the effects, their type , and their degrees of freedom
 	num_factors <- length(factors)
-	factor_df <- unlist(lapply(factors, function(v) paste0('(',tolower(v), '-1)')))
 
-	# Make vectors of the effects, their type (0 = random, 1 = fixed), and their degrees of freedom
 	effects <- combogen(factors, num_factors)
-	effect_type <- combogen(factor_type, num_factors)
-	effect_df <- combogen(factor_df, num_factors)
 
-	effect_df <- lapply(effect_df, function(i) paste(i, collapse=""))
+	effect_type <- combogen(factor_type, num_factors)
 	effect_type <- lapply(effect_type, function(effect) prod(effect))
+
+	factor_df <- lapply(factors, function(v) paste0('(',tolower(v), '-1)'))
+	effect_df <- combogen(factor_df, num_factors)
+	effect_df <- lapply(effect_df, function(i) paste(i, collapse=""))
 
 	# Create denominator for random effects
 	num_effects <- length(effects)
@@ -64,12 +67,9 @@ function (factors, factor_type) {
 		weights[[i]] <- weight
 	}
 
-	effect_strings <- lapply(effects, function(x) paste(x, collapse=""))
-
 	# Assemble weights and variances
-	weightplusvariance <- lapply(1:num_effects, function(x) {
-		paste0(weights[[x]],'&sigma;<sub>',effect_strings[[x]],'</sub>')
-	})
+	effect_strings <- lapply(effects, function(x) paste(x, collapse=""))
+	weightplusvariance <- paste0(weights,'&sigma;<sub>',effect_strings,'</sub>')
 	
 	# Create provisionals for each effect
 	provisional <- matrix("", nrow=1, ncol=num_effects)
@@ -95,6 +95,7 @@ function (factors, factor_type) {
 		matt <- matt[ !grepl(1, matt[,2]),, drop=FALSE ]
 		matt <- matt[ matt[,2] != "",, drop=FALSE ]
 
+		# Pad vector and add it to provisionals matrix
 		diff <- num_effects - nrow(matt)
 		vect <- c(matt[,1], rep("", diff))
 		provisional <- rbind(provisional, vect)
@@ -103,7 +104,7 @@ function (factors, factor_type) {
 
 	# Format output
 	top_row <- c(paste0('E(MS<sub>U/', paste(factors, collapse=""),'</sub>)'), '&sigma;', '', rep('', num_effects))
-	row_names <- lapply(effect_strings, function(x) paste0('E(MS<sub>', x, '</sub>)'))
+	row_names <- paste0('E(MS<sub>', effect_strings, '</sub>)')
 	output <- cbind(row_names, c('&nbsp;&nbsp;&sigma;&nbsp;&nbsp;'), weightplusvariance, provisional)
 	output <- rbind(top_row, output)
 	output <- output[, colSums(output == "") != nrow(output)]
