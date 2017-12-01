@@ -92,5 +92,5 @@ function (factors, factor_type) {
 
 	output <- output[, colSums(output == "") != nrow(output)]
 
-	tablegen(output,nrow(output))
+	tablegen(output)
 }
