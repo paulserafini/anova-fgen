@@ -29,14 +29,8 @@ function (factors, factor_type, step) {
 	levels <- unlist(lapply(levels, function(v) tolower(v)))
 
 	# Create vector of denominators
-	denominators <- c()
-	for (i in 1:num_effects) {
-		if (effect_type[[i]] == 1) {
-			denominators[[i]] <- effect_df[[i]]
-		} else {
-			denominators[[i]] <- levels[[i]]
-		}
-	}
+	combined <- list(levels, effect_df)
+	denominators <- unlist(lapply(1:num_effects, function(x) combined[[ effect_type[[x]]+1 ]] [[x]] ))
 
 	# Create numerator
 	numerator <- tolower(paste(factors, collapse=""))
