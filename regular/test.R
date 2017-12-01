@@ -55,29 +55,28 @@ function (factors, factor_type) {
 	provisional <- matrix("", nrow = 0, ncol = num_effects)
 	for (a in 1:num_effects) {
 
-		matt <- cbind(weightplusvariance, tolower(effect_strings))
+		matt <- cbind(weightplusvariance, effect_strings)
 
 		# Rule out effects w/ out the focal effects
 		for (e in effects[[a]]) {
-			char <- tolower(e)
-			matt <- matt[grepl(char, matt[,2]),, drop = FALSE]
-			matt[,2] <- gsub(char, "", as.character(matt[,2]))
+			matt <- matt[grepl(e, matt[,2]),, drop = FALSE]
+			matt[,2] <- gsub(e, "", as.character(matt[,2]))
 		}
 
 		# Remove fixed effects
-		alphabet <- c("a","b","c","d")
+		alphabet <- c("A","B","C","D")
 		for (f in factors) {
-			char <- tolower(f)
-			num <- match(char, alphabet)
+			num <- match(f, alphabet)
 			effect <- effect_type[[num]]
-			matt[,2] <- gsub(char, effect, as.character(matt[,2]))
+			matt[,2] <- gsub(f, effect, as.character(matt[,2]))
 		}
 		matt <- matt[!grepl(1, matt[,2]),, drop = FALSE]
 		matt <- matt[matt[,2] != "",, drop = FALSE]
 
 		# Pad vector and add it to provisionals matrix
 		diff <- num_effects - nrow(matt)
-		vect <- c(matt[,1], rep("", diff))
+		padding <- rep("", diff)
+		vect <- c(matt[,1], padding)
 		provisional <- rbind(provisional, vect)
 	}
 

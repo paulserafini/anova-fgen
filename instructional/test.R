@@ -44,11 +44,11 @@ function (factors, factor_type, step) {
 					denominator <- effects[[i]]
 				}
 
-					numerator <- paste(numerator, collapse = "")
-					numerator <- tolower(numerator)
+				numerator <- paste(numerator, collapse = "")
+				numerator <- tolower(numerator)
 
-					denominator <- paste(denominator, collapse = "")
-					denominator <- tolower(denominator)
+				denominator <- paste(denominator, collapse = "")
+				denominator <- tolower(denominator)
 
 				if (denominator == "") {
 				  weight <- paste0("n", numerator)
@@ -60,7 +60,7 @@ function (factors, factor_type, step) {
 				weight <- paste0("[ <sup>n", fixed_numerator, "</sup>&frasl;<sub>", fixed_denominator[[i]], "</sub> ]")
 			}
 		} else {
-	    	weight <- '______'
+	    	weight <- "______"
 		}
 		weights[[i]] <- weight
 	}
@@ -73,31 +73,30 @@ function (factors, factor_type, step) {
 	provisional <- matrix("", nrow = 0, ncol = num_effects)
 	for (a in 1:num_effects) {
 
-		matt <- cbind(weightplusvariance, tolower(effect_strings))
+		matt <- cbind(weightplusvariance, effect_strings)
 		matt <- matt[-a,]
 
 		# Rule out effects w/ out the focal effects
 		for (e in effects[[a]]) {
-			char <- tolower(e)
-			matt <- matt[grepl(char, matt[,2]),, drop = FALSE]
-			matt[,2] <- gsub(char, "", as.character(matt[,2]))
+			matt <- matt[grepl(e, matt[,2]),, drop = FALSE]
+			matt[,2] <- gsub(e, "", as.character(matt[,2]))
 		}
 
 		# Remove fixed effects
-		alphabet <- c("a","b","c","d")
+		alphabet <- c("A","B","C","D")
 		if (step > 1) { # step 2
 			for (f in factors) {
-				char <- tolower(f)
-				num <- match(char, alphabet)
+				num <- match(f, alphabet)
 				effect <- effect_type[[num]]
-				matt[,2] <- gsub(char, effect, as.character(matt[,2]))
+				matt[,2] <- gsub(f, effect, as.character(matt[,2]))
 			}
-			matt[ grepl(1, matt[,2]), ] <- paste0('<font color=white>',matt[ grepl(1, matt[,2]), ],'</font>')
+			matt[ grepl(1, matt[,2]), ] <- paste0("<font color=white>",matt[ grepl(1, matt[,2]), ],"</font>")
 		}
 
 		# Pad vector and add it to provisionals matrix
 		diff <- num_effects - nrow(matt)
-		vect <- c(matt[,1], rep("", diff))
+		padding <- rep("", diff)
+		vect <- c(matt[,1], padding)
 		provisional <- rbind(provisional, vect)
 	}
 
