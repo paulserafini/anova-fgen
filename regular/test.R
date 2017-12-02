@@ -64,11 +64,10 @@ function (factors, factor_type) {
 		}
 
 		# Remove fixed effects
-		alphabet <- c("A","B","C","D")
-		for (f in factors) {
-			num <- match(f, alphabet)
-			effect <- effect_type[[num]]
-			matt[,2] <- gsub(f, effect, as.character(matt[,2]))
+		for (f in 1:num_factors) {
+			effect <- effect_type[[f]]
+			letter <- factors[[f]]
+			matt[,2] <- gsub(letter, effect, as.character(matt[,2]))
 		}
 		matt <- matt[!grepl(1, matt[,2]),, drop = FALSE]
 		matt <- matt[matt[,2] != "",, drop = FALSE]

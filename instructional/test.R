@@ -83,12 +83,11 @@ function (factors, factor_type, step) {
 		}
 
 		# Remove fixed effects
-		alphabet <- c("A","B","C","D")
 		if (step > 1) { # step 2
-			for (f in factors) {
-				num <- match(f, alphabet)
-				effect <- effect_type[[num]]
-				matt[,2] <- gsub(f, effect, as.character(matt[,2]))
+			for (f in 1:num_factors) {
+				effect <- effect_type[[f]]
+				letter <- factors[[f]]
+				matt[,2] <- gsub(letter, effect, as.character(matt[,2]))
 			}
 			matt[ grepl(1, matt[,2]), ] <- paste0("<font color=white>",matt[ grepl(1, matt[,2]), ],"</font>")
 		}
