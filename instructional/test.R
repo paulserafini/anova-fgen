@@ -34,14 +34,14 @@ function (factors, factor_type, step) {
 	weights <- c()
 	for (i in 1:num_effects) {
 	  	if (step > 2) {
-			if (effect_type[[i]] == 0) {
+			if (effect_type[i] == 0) {
 
   				if (step > 3) { # step 4
-					numerator <- factors[!(factors %in% effects[[i]])]
+					numerator <- factors[!(factors %in% effects[i])]
 					denominator <- ""
 				} else {
 					numerator <- factors
-					denominator <- effects[[i]]
+					denominator <- effects[i]
 				}
 
 				numerator <- paste(numerator, collapse = "")
@@ -57,12 +57,12 @@ function (factors, factor_type, step) {
 				}
 
 			} else {
-				weight <- paste0("[ <sup>n", fixed_numerator, "</sup>&frasl;<sub>", fixed_denominator[[i]], "</sub> ]")
+				weight <- paste0("[ <sup>n", fixed_numerator, "</sup>&frasl;<sub>", fixed_denominator[i], "</sub> ]")
 			}
 		} else {
 	    	weight <- "______"
 		}
-		weights[[i]] <- weight
+		weights[i] <- weight
 	}
 
 	# Assemble weights and variances
@@ -85,9 +85,7 @@ function (factors, factor_type, step) {
 		# Remove fixed effects
 		if (step > 1) { # step 2
 			for (f in 1:num_factors) {
-				effect <- effect_type[[f]]
-				letter <- factors[[f]]
-				matt[,2] <- gsub(letter, effect, as.character(matt[,2]))
+				matt[,2] <- gsub(factors[f], effect_type[f], as.character(matt[,2]))
 			}
 			matt[ grepl(1, matt[,2]), ] <- paste0("<font color=white>",matt[ grepl(1, matt[,2]), ],"</font>")
 		}

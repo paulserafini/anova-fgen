@@ -33,18 +33,18 @@ function (factors, factor_type) {
 	num_effects <- length(effects)
 	weights <- c()
 	for (i in 1:num_effects) {
-		if (effect_type[[i]] == 0) {
+		if (effect_type[i] == 0) {
 
-			numerator <- factors[!(factors %in% effects[[i]])]
+			numerator <- factors[!(factors %in% effects[i])]
 			numerator <- paste(numerator, collapse = "")
 			numerator <- tolower(numerator)
 
 			weight <- paste0("n", numerator)
 
 		} else {
-			weight <- paste0("[ <sup>n", fixed_numerator, "</sup>&frasl;<sub>", fixed_denominator[[i]], "</sub> ]")
+			weight <- paste0("[ <sup>n", fixed_numerator, "</sup>&frasl;<sub>", fixed_denominator[i], "</sub> ]")
 		}
-		weights[[i]] <- weight
+		weights[i] <- weight
 	}
 
 	# Assemble weights and variances
@@ -65,9 +65,7 @@ function (factors, factor_type) {
 
 		# Remove fixed effects
 		for (f in 1:num_factors) {
-			effect <- effect_type[[f]]
-			letter <- factors[[f]]
-			matt[,2] <- gsub(letter, effect, as.character(matt[,2]))
+			matt[,2] <- gsub(factors[f], effect_type[f], as.character(matt[,2]))
 		}
 		matt <- matt[!grepl(1, matt[,2]),, drop = FALSE]
 		matt <- matt[matt[,2] != "",, drop = FALSE]
