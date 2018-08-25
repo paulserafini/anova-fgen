@@ -12,7 +12,7 @@ shinyServer(function(input, output, session) {
   })
   
   output$foutput <- eventReactive(input$runButton, {
-    calc <- dget("test.R")
+    calc <- dget("ems-gen.R")
 
     alphabet <- c('A','B','C','D')
 
